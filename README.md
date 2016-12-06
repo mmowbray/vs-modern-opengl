@@ -1,2 +1,3 @@
 # vs-modern-opengl
-Visual Studio 2015 starting point for creating modern OpenGL applications in C++
+Visual Studio 2015 starting point for creating modern OpenGL applications in C++.
+Incorporates GLEW, GLFW, and GLM.
