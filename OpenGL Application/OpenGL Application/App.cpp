@@ -130,9 +130,30 @@ int main()
 	GLuint shader_program = loadShaders("triangle.vs", "triangle.fs");
 	glUseProgram(shader_program);
 
+	GLfloat triangle_vertices[] = {
+		0.0f,  0.5f, 0.0f,		
+		0.5f, -0.5f, 0.0f,
+		-0.5f, -0.5f, 0.0f
+	};
+
+	GLuint triangleVAO;
+	glGenVertexArrays(1, &triangleVAO);
+	glBindVertexArray(triangleVAO);
+
+	GLuint triangleVertices;
+	glGenBuffers(1, &triangleVertices);
+	glBindBuffer(GL_ARRAY_BUFFER, triangleVertices);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
+	glEnableVertexAttribArray(0);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		glBindVertexArray(triangleVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindVertexArray(triangleVAO);
 
 		glfwSwapBuffers(window);
 
