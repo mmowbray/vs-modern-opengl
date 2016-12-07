@@ -9,7 +9,16 @@
 #include <string>
 #include <fstream>
 
+glm::vec3 camera_position = glm::vec3(0.0f, 0.0f, 5.0f);
+
 glm::mat4 triangle_model_matrix;
+glm::mat4 view_matrix;
+glm::mat4 projection_matrix;
+
+const GLuint DEFAULT_WINDOW_WIDTH = 800, DEFAULT_WINDOW_HEIGHT = 800;
+const GLfloat CAMERA_MOVEMENT_SPEED = 0.02f;
+
+double ypos_old = -1;
 
 GLuint loadShaders(std::string vertex_shader_path, std::string fragment_shader_path)
 {
@@ -112,8 +121,25 @@ GLuint loadShaders(std::string vertex_shader_path, std::string fragment_shader_p
 void framebuffer_size_callback(GLFWwindow* window, int new_screen_width, int new_screen_height)
 {
 	glViewport(0, 0, new_screen_width, new_screen_height);
+	projection_matrix = glm::perspective(45.0f, (GLfloat)new_screen_width / (GLfloat)new_screen_height, 0.1f, 10.0f);
+}
 
-	//TODO: recompute the projection matrix
+void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
+
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+	{
+		if(ypos_old != -1)
+		{
+			camera_position.z += CAMERA_MOVEMENT_SPEED * (ypos_old - ypos);
+			camera_position.z = glm::clamp(camera_position.z, 0.0f, 10.0f);	
+		}
+
+		ypos_old = ypos;
+	}
+	else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
+		ypos_old = -1;
+	}
+
 }
 
 int main()
@@ -124,7 +150,7 @@ int main()
 	if (!glfwInit())
 		return -1;
 
-	window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+	window = glfwCreateWindow(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "Hello World", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -132,6 +158,7 @@ int main()
 	}
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, cursor_pos_callback);
 	glfwMakeContextCurrent(window);
 
 	glewExperimental = GL_TRUE;
@@ -144,7 +171,9 @@ int main()
 	GLuint shader_program = loadShaders("triangle.vs", "triangle.fs");
 	glUseProgram(shader_program);
 
-	GLint positionLoc = glGetUniformLocation(shader_program, "model_matrix");
+	GLint modelMatrixLoc = glGetUniformLocation(shader_program, "model_matrix");
+	GLint viewMatrixLoc = glGetUniformLocation(shader_program, "view_matrix");
+	GLint projectionMatrixLoc = glGetUniformLocation(shader_program, "projection_matrix");
 
 	GLfloat triangle_vertices[] = {
 		0.0f,  0.5f, 0.0f,		
@@ -165,12 +194,18 @@ int main()
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
+	projection_matrix = glm::perspective(45.0f, (GLfloat)DEFAULT_WINDOW_HEIGHT / (GLfloat)DEFAULT_WINDOW_WIDTH, 0.1f, 100.0f);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		triangle_model_matrix = rotate(triangle_model_matrix, (GLfloat)glfwGetTime() / 10.0f, glm::vec3(0.0f, 0.0f, 1.0f));
-		glUniformMatrix4fv(positionLoc, 1, GL_FALSE, value_ptr(triangle_model_matrix));
+		view_matrix = lookAt(camera_position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		
+		glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, value_ptr(triangle_model_matrix));
+		glUniformMatrix4fv(viewMatrixLoc, 1, GL_FALSE, value_ptr(view_matrix));
+		glUniformMatrix4fv(projectionMatrixLoc, 1, GL_FALSE, value_ptr(projection_matrix));
 
 		glBindVertexArray(triangleVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
