@@ -109,6 +109,13 @@ GLuint loadShaders(std::string vertex_shader_path, std::string fragment_shader_p
 	return program_id;
 }
 
+void framebuffer_size_callback(GLFWwindow* window, int new_screen_width, int new_screen_height)
+{
+	glViewport(0, 0, new_screen_width, new_screen_height);
+
+	//TODO: recompute the projection matrix
+}
+
 int main()
 {
 
@@ -124,6 +131,7 @@ int main()
 		return -1;
 	}
 
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwMakeContextCurrent(window);
 
 	glewExperimental = GL_TRUE;
