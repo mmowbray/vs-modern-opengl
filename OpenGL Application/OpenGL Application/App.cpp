@@ -1,9 +1,15 @@
 #include "glew.h"
 #include "glfw3.h"
+#include "glm.hpp"
+
+#include "matrix_transform.hpp"
+#include "type_ptr.hpp"
 
 #include <vector>
 #include <string>
 #include <fstream>
+
+glm::mat4 triangle_model_matrix;
 
 GLuint loadShaders(std::string vertex_shader_path, std::string fragment_shader_path)
 {
@@ -130,6 +136,8 @@ int main()
 	GLuint shader_program = loadShaders("triangle.vs", "triangle.fs");
 	glUseProgram(shader_program);
 
+	GLint positionLoc = glGetUniformLocation(shader_program, "model_matrix");
+
 	GLfloat triangle_vertices[] = {
 		0.0f,  0.5f, 0.0f,		
 		0.5f, -0.5f, 0.0f,
@@ -147,13 +155,18 @@ int main()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
 	glEnableVertexAttribArray(0);
 
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		triangle_model_matrix = rotate(triangle_model_matrix, (GLfloat)glfwGetTime() / 10.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+		glUniformMatrix4fv(positionLoc, 1, GL_FALSE, value_ptr(triangle_model_matrix));
+
 		glBindVertexArray(triangleVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-		glBindVertexArray(triangleVAO);
+		glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
 

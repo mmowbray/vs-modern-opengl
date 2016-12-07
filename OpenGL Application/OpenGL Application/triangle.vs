@@ -1,7 +1,9 @@
-#version 330
+#version 330 core
 
-in (location = 0) vec3 vertex_position;
+layout (location = 0) in vec3 vertex_position;
 
-void main () {
-	gl_Position = vec4(vertex_position, 1);
-};
+uniform mat4 model_matrix;
+
+void main() {
+	gl_Position = model_matrix * vec4(vertex_position, 1);
+}
