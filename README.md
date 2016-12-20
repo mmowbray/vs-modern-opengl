@@ -9,3 +9,5 @@ The current scene contains a spinning triangle, and you can zoom in and out of t
 Plumbing includes use of a VAO, a VBO, GLFW callbacks, uniform variables, and a basic shader program for you to use as a starting point in your projects.
 
 Two build configurations are included (both 32-bit): Debug and Release.
+
+![screenshot](screenshot.png)
