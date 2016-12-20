@@ -95,9 +95,6 @@ GLuint loadShaders(std::string vertex_shader_path, std::string fragment_shader_p
 	glAttachShader(program_id, VertexShaderID);
 	glAttachShader(program_id, FragmentShaderID);
 
-	glBindAttribLocation(program_id, 0, "in_Position");
-	glBindFragDataLocation(program_id, 0, "out_Color");
-
 	glLinkProgram(program_id);
 
 	// Check the program
