@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include "GLSLProgram.h"
 
 glm::vec3 camera_position = glm::vec3(0.0f, 0.0f, 5.0f);
 
@@ -18,107 +19,14 @@ glm::mat4 projection_matrix;
 const GLuint DEFAULT_WINDOW_WIDTH = 800, DEFAULT_WINDOW_HEIGHT = 800;
 const GLfloat CAMERA_MOVEMENT_SPEED = 0.02f;
 
+GLSLProgram* shaderProgram;
+
 double ypos_old = -1;
-
-GLuint loadShaders(std::string vertex_shader_path, std::string fragment_shader_path)
-{
-	// Create the shaders
-	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-
-	// Read the Vertex Shader code from the file
-	std::string VertexShaderCode;
-	std::ifstream VertexShaderStream(vertex_shader_path, std::ios::in);
-	if (VertexShaderStream.is_open()) {
-		std::string Line = "";
-		while (getline(VertexShaderStream, Line))
-			VertexShaderCode += "\n" + Line;
-		VertexShaderStream.close();
-	}
-	else {
-		printf("Impossible to open %s. Are you in the right directory?\n", vertex_shader_path.c_str());
-		getchar();
-		exit(-1);
-	}
-
-	// Read the Fragment Shader code from the file
-	std::string FragmentShaderCode;
-	std::ifstream FragmentShaderStream(fragment_shader_path, std::ios::in);
-	if (FragmentShaderStream.is_open()) {
-		std::string Line = "";
-		while (getline(FragmentShaderStream, Line))
-			FragmentShaderCode += "\n" + Line;
-		FragmentShaderStream.close();
-	}
-	else {
-		printf("Impossible to open %s. Are you in the right directory?\n", fragment_shader_path.c_str());
-		getchar();
-		exit(-1);
-	}
-
-	GLint Result = GL_FALSE;
-	int InfoLogLength;
-
-	// Compile Vertex Shader
-	printf("Compiling shader : %s\n", vertex_shader_path.c_str());
-	char const * VertexSourcePointer = VertexShaderCode.c_str();
-	glShaderSource(VertexShaderID, 1, &VertexSourcePointer, nullptr);
-	glCompileShader(VertexShaderID);
-
-	// Check Vertex Shader
-	glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if (InfoLogLength > 0) {
-		std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
-		glGetShaderInfoLog(VertexShaderID, InfoLogLength, nullptr, &VertexShaderErrorMessage[0]);
-		printf("%s\n", &VertexShaderErrorMessage[0]);
-	}
-
-	// Compile Fragment Shader
-	printf("Compiling shader : %s\n", fragment_shader_path.c_str());
-	char const * FragmentSourcePointer = FragmentShaderCode.c_str();
-	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, nullptr);
-	glCompileShader(FragmentShaderID);
-
-	// Check Fragment Shader
-	glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if (InfoLogLength > 0) {
-		std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
-		glGetShaderInfoLog(FragmentShaderID, InfoLogLength, nullptr, &FragmentShaderErrorMessage[0]);
-		printf("%s\n", &FragmentShaderErrorMessage[0]);
-	}
-
-	// Link the program
-	printf("Linking program\n");
-	GLuint program_id = glCreateProgram();
-	glAttachShader(program_id, VertexShaderID);
-	glAttachShader(program_id, FragmentShaderID);
-
-	glLinkProgram(program_id);
-
-	// Check the program
-	glGetProgramiv(program_id, GL_LINK_STATUS, &Result);
-	glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if (InfoLogLength > 0) {
-		std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
-		glGetProgramInfoLog(program_id, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
-		printf("%s\n", &ProgramErrorMessage[0]);
-	}
-
-	glDetachShader(program_id, VertexShaderID);
-	glDetachShader(program_id, FragmentShaderID);
-
-	glDeleteShader(VertexShaderID);
-	glDeleteShader(FragmentShaderID);
-
-	return program_id;
-}
 
 void framebuffer_size_callback(GLFWwindow* window, int new_screen_width, int new_screen_height)
 {
 	glViewport(0, 0, new_screen_width, new_screen_height);
-	projection_matrix = glm::perspective(45.0f, (GLfloat)new_screen_width / (GLfloat)new_screen_height, 0.1f, 10.0f);
+	projection_matrix = glm::perspective(45.0f, (GLfloat)new_screen_width / (GLfloat)new_screen_height, 0.1f, 100.0f);
 }
 
 void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -137,6 +45,11 @@ void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
 		ypos_old = -1;
 	}
 
+}
+
+void cleanUp()
+{
+	delete shaderProgram;
 }
 
 int main()
@@ -165,12 +78,32 @@ int main()
 		return -1;
 	}
 
-	GLuint shader_program = loadShaders("triangle.vs", "triangle.fs");
-	glUseProgram(shader_program);
+	shaderProgram = new GLSLProgram();
 
-	GLint modelMatrixLoc = glGetUniformLocation(shader_program, "model_matrix");
-	GLint viewMatrixLoc = glGetUniformLocation(shader_program, "view_matrix");
-	GLint projectionMatrixLoc = glGetUniformLocation(shader_program, "projection_matrix");
+	if(!shaderProgram->compileShaderFromFile("triangle.vs", GL_VERTEX_SHADER))
+	{
+		printf("Vertex shader failed to compile!\n%s", shaderProgram->log().c_str());
+		exit(1);
+	}
+
+	if (!shaderProgram->compileShaderFromFile("triangle.fs", GL_FRAGMENT_SHADER))
+	{
+		printf("Fragment shader failed to compile!\n%s", shaderProgram->log().c_str());
+		exit(1);
+	}
+
+	// Possibly call bindAttribLocation or bindFragDataLocation here
+
+	if (!shaderProgram->link())
+	{
+		printf("Shader program failed to link!\n%s", shaderProgram->log().c_str());
+		exit(1);
+	}
+
+	shaderProgram->use();
+
+	//shaderProgram->printActiveUniforms();
+	//shaderProgram->printActiveAttribs();
 
 	GLfloat triangle_vertices[] = {
 		0.0f,  0.5f, 0.0f,		
@@ -199,19 +132,20 @@ int main()
 
 		triangle_model_matrix = rotate(triangle_model_matrix, (GLfloat)glfwGetTime() / 10.0f, glm::vec3(0.0f, 0.0f, 1.0f));
 		view_matrix = lookAt(camera_position, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		
-		glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, value_ptr(triangle_model_matrix));
-		glUniformMatrix4fv(viewMatrixLoc, 1, GL_FALSE, value_ptr(view_matrix));
-		glUniformMatrix4fv(projectionMatrixLoc, 1, GL_FALSE, value_ptr(projection_matrix));
+
+		shaderProgram->setUniform("model_matrix", triangle_model_matrix);
+		shaderProgram->setUniform("view_matrix", view_matrix);
+		shaderProgram->setUniform("projection_matrix", projection_matrix);
 
 		glBindVertexArray(triangleVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
-
 		glfwPollEvents();
 	}
+
+	cleanUp();
 
 	glfwTerminate();
 	return 0;

@@ -196,5 +196,5 @@ bool GLSLProgram::fileExists(const string & fileName)
 
 int GLSLProgram::getUniformLocation(const char * name)
 {
-	glGetUniformLocation(handle, name);
+	return glGetUniformLocation(handle, name);
 }
