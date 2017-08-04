@@ -74,6 +74,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="GLSLProgram.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GLSLProgram.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
