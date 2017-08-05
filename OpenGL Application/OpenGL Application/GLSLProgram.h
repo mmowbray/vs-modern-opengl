@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <glew.h>
 #include <mat4x2.hpp>
@@ -33,4 +34,5 @@ public:
 	void setUniform(const char *name, int val);
 	void setUniform(const char *name, bool val);
 	void printActiveUniforms();
+	void printActiveAttribs();
 };

@@ -25,6 +25,7 @@ bool GLSLProgram::compileShaderFromString(const string & source, GLuint type)
 	{
 		//linked = true;
 		glAttachShader(handle, shaderID);
+		printf("Shader compiled successfully.\n");
 		return true;
 	}
 	else
@@ -36,6 +37,7 @@ bool GLSLProgram::compileShaderFromString(const string & source, GLuint type)
 			std::vector<char> infoLog(maxLength + 1);
 			glGetShaderInfoLog(shaderID, maxLength, nullptr, infoLog.data());
 			logString = string(std::begin(infoLog), std::end(infoLog));
+			printf("One or more error were encountered while compiling this shader.\n");
 		}
 
 		return false;
@@ -72,6 +74,7 @@ bool GLSLProgram::link()
 	if(isLinked == GL_TRUE)
 	{
 		linked = true;
+		printf("Shader program linked successfully.\n");
 	}else
 	{
 		GLint maxLength = 0;
@@ -185,7 +188,48 @@ void GLSLProgram::setUniform(const char *name, bool val)
 
 void GLSLProgram::printActiveUniforms()
 {
-	//@TODO
+	GLint i;
+	GLint count;
+
+	GLint size; // size of the variable
+	GLenum type; // type of the variable (float, vec3 or mat4, etc)
+
+	const GLsizei bufSize = 32; // maximum name length
+	GLchar name[bufSize]; // variable name in GLSL
+	GLsizei length; // name length
+
+	glGetProgramiv(handle, GL_ACTIVE_UNIFORMS, &count);
+	printf("Active Uniforms: %d\n", count);
+
+	for (i = 0; i < count; i++)
+	{
+		glGetActiveUniform(handle, (GLuint)i, bufSize, &length, &size, &type, name);
+
+		printf("Uniform #%d Type: %u Name: %s\n", i, type, name);
+	}
+}
+
+void GLSLProgram::printActiveAttribs()
+{
+	GLint i;
+	GLint count;
+
+	GLint size; // size of the variable
+	GLenum type; // type of the variable (float, vec3 or mat4, etc)
+
+	const GLsizei bufSize = 32; // maximum name length
+	GLchar name[bufSize]; // variable name in GLSL
+	GLsizei length; // name length
+
+	glGetProgramiv(handle, GL_ACTIVE_ATTRIBUTES, &count);
+	printf("Active Attributes: %d\n", count);
+
+	for (i = 0; i < count; i++)
+	{
+		glGetActiveAttrib(handle, (GLuint)i, bufSize, &length, &size, &type, name);
+
+		printf("Attribute #%d Type: %u Name: %s\n", i, type, name);
+	}
 }
 
 bool GLSLProgram::fileExists(const string & fileName)

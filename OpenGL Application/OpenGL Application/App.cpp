@@ -26,7 +26,7 @@ double ypos_old = -1;
 void framebuffer_size_callback(GLFWwindow* window, int new_screen_width, int new_screen_height)
 {
 	glViewport(0, 0, new_screen_width, new_screen_height);
-	projection_matrix = glm::perspective(45.0f, (GLfloat)new_screen_width / (GLfloat)new_screen_height, 0.1f, 100.0f);
+	projection_matrix = glm::perspective(45.0f, (GLfloat)new_screen_width / (GLfloat)new_screen_height, 0.1f, 10.0f);
 }
 
 void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -54,7 +54,6 @@ void cleanUp()
 
 int main()
 {
-
 	GLFWwindow* window;
 
 	if (!glfwInit())
@@ -83,30 +82,31 @@ int main()
 	if(!shaderProgram->compileShaderFromFile("triangle.vs", GL_VERTEX_SHADER))
 	{
 		printf("Vertex shader failed to compile!\n%s", shaderProgram->log().c_str());
+		getchar();
 		exit(1);
 	}
 
 	if (!shaderProgram->compileShaderFromFile("triangle.fs", GL_FRAGMENT_SHADER))
 	{
 		printf("Fragment shader failed to compile!\n%s", shaderProgram->log().c_str());
+		getchar();
 		exit(1);
 	}
-
-	// Possibly call bindAttribLocation or bindFragDataLocation here
 
 	if (!shaderProgram->link())
 	{
 		printf("Shader program failed to link!\n%s", shaderProgram->log().c_str());
+		getchar();
 		exit(1);
 	}
 
 	shaderProgram->use();
 
-	//shaderProgram->printActiveUniforms();
-	//shaderProgram->printActiveAttribs();
+	shaderProgram->printActiveUniforms();
+	shaderProgram->printActiveAttribs();
 
 	GLfloat triangle_vertices[] = {
-		0.0f,  0.5f, 0.0f,		
+		0.0f,  0.5f, 0.0f,
 		0.5f, -0.5f, 0.0f,
 		-0.5f, -0.5f, 0.0f
 	};
